@@ -78,7 +78,7 @@ class neuralNetwork:
         return final_outputs
 
     def save_weights(self):
-        np.savetxt('weights.txt', np.vstack([self.who,self.wih]), delimiter=" ", fmt="%s") 
+        # np.savetxt('weights.txt', np.vstack([self.who,self.wih]), delimiter=" ", fmt="%s") 
         pass
 
 
@@ -121,6 +121,6 @@ if __name__ == "__main__":
 
     print("Predict: {}".format(label))
     print("Actual: {}".format(y_test[2]))
-    nn.save_weights()
+    # nn.save_weights()
 
     
