@@ -169,12 +169,15 @@ if __name__ == "__main__":
     nn = NeuralNetwork(input_nodes,hidden_nodes,output_nodes, learning_rate)
 
     predict = Predict(isTrainning, nn)
-    label = predict.predict(X_test[2])
+
+    index_text = 2
+
+    label = predict.predict(X_test[index_text])
     
     print("Predict: {}".format(label))
-    print("Actual: {}".format(y_test[2]))
+    print("Actual: {}".format(y_test[index_text]))
 
-    predict.show_predict(label,y_test[2],X_test[2])
+    predict.show_predict(label,y_test[index_text],X_test[index_text])
 
 
     
