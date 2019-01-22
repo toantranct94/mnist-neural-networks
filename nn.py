@@ -1,13 +1,11 @@
 import numpy as np
-from scipy.special import expit
+from scipy.special import expit # sigmoid 
 import matplotlib.pyplot as plt
-import gzip
 
 from keras.datasets import mnist
 
-# from tensorflow.contrib.learn.python.learn.datasets.mnist import extract_images, extract_labels
 
-class neuralNetwork:
+class NeuralNetwork:
     
     def __init__(self, input_nodes, hidden_nodes, output_nodes, learningrate):
         self.i_nodes = input_nodes
@@ -15,16 +13,13 @@ class neuralNetwork:
         self.o_nodes = output_nodes
         
         # link weight matrices, wih and who
-        # weights inside the arrays are w_i_j, where link is from node i to node j in the next layer
-        # w11 w21
-        # w12 w22 etc 
         self.wih = np.random.normal(0.0, pow(self.i_nodes, -0.5), (self.h_nodes, self.i_nodes))
         self.who = np.random.normal(0.0, pow(self.h_nodes, -0.5), (self.o_nodes, self.h_nodes))
 
         # learning rate
         self.lr = learningrate
         
-        # activation function is the sigmoid function
+        # activation function: sigmoid function
         self.activation_function = lambda x: expit(x)
         
         pass
@@ -78,49 +73,108 @@ class neuralNetwork:
         return final_outputs
 
     def save_weights(self):
-        # np.savetxt('weights.txt', np.vstack([self.who,self.wih]), delimiter=" ", fmt="%s") 
+        np.savetxt('who.txt', self.who, delimiter=" ", fmt="%s") 
+        np.savetxt('wih.txt', self.wih, delimiter=" ", fmt="%s") 
+        pass
+    
+    def set_weights(self, who, wih):
+        self.who = who
+        self.wih = wih
         pass
 
+class Predict:
+    def __init__(self, isTrainning, neuralNetwork):
+        self.isTrainning = isTrainning
+        self.neuralNetwork = neuralNetwork
+
+    def get_data(self):
+        (X_train, y_train), (X_test, y_test) = mnist.load_data()
+        return X_train, y_train, X_test, y_test
+    
+    def predict(self, _input):
+        # scale the input: 0.01 -> 1.00
+        _input = np.array(_input)
+        _input = _input.flatten()
+        _input = (np.asfarray(_input) / 255.0 * 0.99) + 0.01
+
+        # use exist weights 
+        if not self.isTrainning:
+            who = np.loadtxt('who.txt')
+            wih = np.loadtxt('wih.txt')
+            self.neuralNetwork.set_weights(who, wih)
+            _output = self.neuralNetwork.predict(_input)
+            label = np.argmax(_output)
+            return label
+        # train 
+        else:
+            print('Start training')
+            X_train, y_train, X_test, y_test = self.get_data()
+            for image, label in zip(X_train, y_train):
+                # scale inputs: 0.01 -> 1.00
+                image = np.array(image)
+                image = image.flatten()
+                inputs = (np.asfarray(image) / 255.0 * 0.99) + 0.01
+
+                targets = np.zeros(output_nodes) + 0.01
+                targets[int(label)] = 0.99
+                self.neuralNetwork.train(inputs, targets)
+            print('Finish training')
+            # save weights:
+            self.neuralNetwork.save_weights()
+            # predict output:
+            _output = self.neuralNetwork.predict(_input)
+            label = np.argmax(_output)
+            # accuracy:
+            accuracy = self.accuracy(X_test, y_test)
+            print('accuracy: ' + str(accuracy))
+            return label
+
+    def accuracy(self, X_test, y_test):
+        acc_arr = []
+        for image, label in zip(X_test, y_test):
+            # scale inputs: 0.01 -> 1.00
+            image = np.array(image)
+            image = image.flatten()
+            _input = (np.asfarray(image) / 255.0 * 0.99) + 0.01
+            _output = self.neuralNetwork.predict(_input)
+            _output = np.argmax(_output)
+            if _output == label:
+                acc_arr.append(1)
+            else:
+                acc_arr.append(0)
+        
+        acc = acc_arr.count(1) / len(X_test)
+        return acc
+
+    def show_predict(self, predict_label, actual_label,actual_image):
+        plt.imshow(actual_image, cmap='gray')
+        plt.title('Predict label: ' + str(predict_label) + ' --- ' + 'Actual label: ' + str(actual_label))
+        plt.show()
 
 if __name__ == "__main__":
-
+    # load data
     (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
+    isTrainning = False
+
     # number of input, hidden and output nodes
-    # input 28x28 pixel
+    # inputs: 28x28=784
     input_nodes = 784
     hidden_nodes = 200
-    # outputs from 0...9
+    # outputs: 0...9
     output_nodes = 10
-
     # learning rate
     learning_rate = 0.1
 
-    nn = neuralNetwork(input_nodes,hidden_nodes,output_nodes, learning_rate)
+    nn = NeuralNetwork(input_nodes,hidden_nodes,output_nodes, learning_rate)
 
-    # go through all records in the training data set
-
-    for image, label in zip(X_train, y_train):
-        # scale and shift the inputs
-        image = np.array(image)
-        image = image.flatten()
-        inputs = (np.asfarray(image) / 255.0 * 0.99) + 0.01
-        # create the target output values (all 0.01, except the desired label which is 0.99)
-        targets = np.zeros(output_nodes) + 0.01
-        # all_values[0] is the target label for this record
-        targets[int(label)] = 0.99
-        nn.train(inputs, targets)
-        pass
-
-    # predict
-    image = np.array(X_test[2])
-    image = image.flatten()
-    _input = (np.asfarray(image) / 255.0 * 0.99) + 0.01
-    _output = nn.predict(_input)
-    label = np.argmax(_output)
-
+    predict = Predict(isTrainning, nn)
+    label = predict.predict(X_test[2])
+    
     print("Predict: {}".format(label))
     print("Actual: {}".format(y_test[2]))
-    # nn.save_weights()
+
+    predict.show_predict(label,y_test[2],X_test[2])
+
 
     
