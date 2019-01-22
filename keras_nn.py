@@ -44,6 +44,11 @@ def scale_data(X_train, y_train,X_test, y_test):
         y_t.append(target)
     return np.asarray(X), np.asarray(y), np.asarray(X_t), np.asarray(y_t)
 
+def show_predict(predict_label, actual_label,actual_image):
+    plt.imshow(actual_image, cmap='gray')
+    plt.title('Predict label: ' + str(predict_label) + ' --- ' + 'Actual label: ' + str(actual_label))
+    plt.show()
+
 if __name__ == "__main__":
     (X_train, y_train), (X_test, y_test) = mnist.load_data()
     X, y, X_t, y_t = scale_data(X_train, y_train,X_test, y_test)
@@ -51,14 +56,12 @@ if __name__ == "__main__":
     if not model.is_file():
         model = create_model()
         train_model(model, X, y)
+        model.save('model.h5')
     else: 
         model = load_model('model.h5')
 
     predict = model.predict(X_t)
-    print(np.argmax(predict[0]))
-
-    model.save('model.h5')
-
-    plt.imshow(X_test[0], cmap='gray')
-    plt.title('Predict label: ' + str(np.argmax(predict[0])) + ' --- ' + 'Actual label: ' + str(y_test[0]))
-    plt.show()
+    index_test = 899
+    print(np.argmax(predict[index_test]))
+    
+    show_predict(np.argmax(predict[index_test]),y_test[index_test], X_test[index_test])
