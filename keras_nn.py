@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 from keras.datasets import mnist
 
 from keras.layers.core import Dense, Activation
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.optimizers import Adam
+from pathlib import Path
 
 def create_model():
     model = Sequential()
@@ -18,8 +19,7 @@ def train_model(model, X, y):
     model.compile(loss='mse', optimizer=Adam(lr=1e-3))
     model.fit(X, y)
 
-def load_data():
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+def scale_data(X_train, y_train,X_test, y_test):
     X = []
     y = []
     X_t = []
@@ -44,16 +44,21 @@ def load_data():
         y_t.append(target)
     return np.asarray(X), np.asarray(y), np.asarray(X_t), np.asarray(y_t)
 
-X, y, X_t, y_t = load_data()
+if __name__ == "__main__":
+    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+    X, y, X_t, y_t = scale_data(X_train, y_train,X_test, y_test)
+    model = Path("model.h5")
+    if not model.is_file():
+        model = create_model()
+        train_model(model, X, y)
+    else: 
+        model = load_model('model.h5')
 
-model = create_model()
-train_model(model, X, y)
-print(X_t[0].shape)
-predict = model.predict(X_t)
-print(np.argmax(predict[0]))
+    predict = model.predict(X_t)
+    print(np.argmax(predict[0]))
 
-(X_train, y_train), (X_test, y_test) = mnist.load_data()
+    model.save('model.h5')
 
-plt.imshow(X_test[0], cmap='gray')
-plt.title('Predict label: ' + str(np.argmax(predict[0])) + ' --- ' + 'Actual label: ' + str(y_test[0]))
-plt.show()
+    plt.imshow(X_test[0], cmap='gray')
+    plt.title('Predict label: ' + str(np.argmax(predict[0])) + ' --- ' + 'Actual label: ' + str(y_test[0]))
+    plt.show()
