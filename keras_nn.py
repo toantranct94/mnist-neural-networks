@@ -61,6 +61,8 @@ if __name__ == "__main__":
         model = load_model('model.h5')
 
     predict = model.predict(X_t)
+    # make a prediction for one.
+    # model.predict( np.array( [X[0],] )  )
     index_test = 899
     print(np.argmax(predict[index_test]))
     
